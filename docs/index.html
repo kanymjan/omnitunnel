@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none'%3E%3Ccircle cx='60' cy='60' r='52' stroke='%233B5BDB' stroke-width='8'/%3E%3Ccircle cx='66' cy='55' r='32' stroke='%238EA6FF' stroke-width='8'/%3E%3Ccircle cx='73' cy='50' r='11' fill='%23E0F2FE'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --base:#060A18; --text:#F2F5FF; --muted:#A8B3D1; --soft:#C9D3F2;
@@ -17,6 +17,9 @@
   --glass:rgba(255,255,255,.07); --glass-strong:rgba(255,255,255,.11); --border:rgba(255,255,255,.14);
   --display:'Unbounded',system-ui,sans-serif; --body:'Onest',system-ui,sans-serif;
 }
+/* В Unbounded нет букв ү, ө, ң — для кыргызского заголовки набираем Onest */
+html[lang="ky"]{--display:'Onest',system-ui,sans-serif}
+html[lang="ky"] h1,html[lang="ky"] h2,html[lang="ky"] .scr h4{font-weight:700;letter-spacing:-.3px}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--base);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.55;overflow-x:hidden}
