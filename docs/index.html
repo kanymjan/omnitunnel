@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OmniTunnel — VPN-пилот для Android</title>
+<meta name="description" content="OmniTunnel — пилот VPN на WireGuard для Android: доступ на 30 минут или свой конфиг. Русский и кыргызский.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none'%3E%3Ccircle cx='60' cy='60' r='52' stroke='%233B5BDB' stroke-width='8'/%3E%3Ccircle cx='66' cy='55' r='32' stroke='%238EA6FF' stroke-width='8'/%3E%3Ccircle cx='73' cy='50' r='11' fill='%23E0F2FE'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --base:#060A18; --text:#F2F5FF; --muted:#A8B3D1; --soft:#C9D3F2;
+  --accent:#3B5BDB; --accent-bright:#5B7CFA; --accent-light:#8EA6FF; --deep:#1E40AF; --navy:#1E2A6B;
+  --indigo:#4338CA; --cyan:#7DD3FC; --success:#34C38F; --success-text:#6EE7B7; --warning:#F2B84B;
+  --glass:rgba(255,255,255,.07); --glass-strong:rgba(255,255,255,.11); --border:rgba(255,255,255,.14);
+  --display:'Unbounded',system-ui,sans-serif; --body:'Onest',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--base);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.55;overflow-x:hidden}
+a{color:var(--accent-light);text-decoration:none}
+a:hover{color:var(--text)}
+img,svg{display:block}
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.glow span{position:absolute;width:620px;height:620px;border-radius:50%;filter:blur(40px);opacity:.9;animation:drift 18s ease-in-out infinite}
+.glow span:nth-child(1){left:-180px;top:-160px;background:radial-gradient(circle,rgba(30,64,175,.55),transparent 65%)}
+.glow span:nth-child(2){right:-220px;top:30vh;background:radial-gradient(circle,rgba(67,56,202,.42),transparent 65%);animation-duration:22s}
+.glow span:nth-child(3){left:20%;bottom:-300px;background:radial-gradient(circle,rgba(14,165,233,.18),transparent 65%);animation-duration:26s}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,-36px)}}
+@media (prefers-reduced-motion:reduce){.glow span,.orb,.orb::before,.orb::after{animation:none!important}}
+.wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:0 20px}
+.glass{background:var(--glass);border:1px solid var(--border);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+
+/* header */
+header{position:sticky;top:0;z-index:10;background:rgba(6,10,24,.65);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.06)}
+.nav{display:flex;align-items:center;gap:20px;height:68px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--text);font-family:var(--display);font-weight:600;font-size:18px}
+.nav ul{display:flex;gap:22px;list-style:none;margin:0 0 0 auto;padding:0}
+.nav ul a{color:var(--muted);font-size:15px}
+.nav ul a:hover{color:var(--text)}
+.lang{display:flex;padding:3px;border-radius:999px;background:var(--glass);border:1px solid var(--border)}
+.lang button{border:0;background:none;color:var(--muted);font:500 13px var(--body);padding:6px 12px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent-bright);color:#fff}
+@media (max-width:820px){.nav ul{display:none}.lang{margin-left:auto}}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:72px 0 56px}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--border);color:var(--soft);font-size:13px;font-weight:500}
+.badge i{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 10px var(--success)}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(34px,5.2vw,58px);line-height:1.08;letter-spacing:-.5px;margin:22px 0 18px}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--cyan),var(--accent-light));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--muted);font-size:18px;max-width:540px;margin:0 0 30px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:0 24px;border-radius:18px;font:600 16px var(--body);cursor:pointer;border:1px solid rgba(255,255,255,.2)}
+.btn-primary{background:linear-gradient(90deg,var(--accent-bright),var(--deep));color:#fff;box-shadow:0 12px 32px rgba(30,64,175,.55)}
+.btn-primary:hover{color:#fff;filter:brightness(1.08)}
+.btn-ghost{background:var(--glass);color:var(--text)}
+.btn-ghost:hover{background:var(--glass-strong)}
+.dl-note{color:var(--muted);font-size:13px;margin-top:14px}
+.hero-visual{position:relative;display:flex;justify-content:center;align-items:center;min-height:420px}
+.orb{position:relative;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--accent-light) 0%,var(--accent) 40%,var(--navy) 100%);border:1px solid rgba(255,255,255,.25);box-shadow:0 0 90px rgba(91,124,250,.7);display:flex;align-items:center;justify-content:center;animation:breathe 3.4s ease-in-out infinite}
+.orb::before,.orb::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid rgba(91,124,250,.6);animation:pulse 3s ease-out infinite}
+.orb::after{animation-delay:1.5s}
+@keyframes pulse{from{transform:scale(1);opacity:.7}to{transform:scale(1.7);opacity:0}}
+@keyframes breathe{0%,100%{box-shadow:0 0 70px rgba(59,91,219,.6)}50%{box-shadow:0 0 120px rgba(91,124,250,.9)}}
+.orb svg{width:84px;height:84px}
+@media (max-width:860px){.hero{grid-template-columns:1fr;padding-top:48px}.hero-visual{min-height:340px}.orb{width:210px;height:210px}}
+
+/* sections */
+section{padding:64px 0}
+h2{font-family:var(--display);font-weight:600;font-size:clamp(24px,3.4vw,36px);line-height:1.2;margin:0 0 12px}
+.sub{color:var(--muted);margin:0 0 32px;max-width:640px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media (max-width:860px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+.card{padding:26px}
+.card h3{font-size:20px;font-weight:600;margin:16px 0 8px}
+.card p{color:var(--muted);margin:0}
+.icon{width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.icon.managed{background:linear-gradient(135deg,var(--accent),var(--navy));box-shadow:0 0 26px rgba(59,91,219,.55)}
+.icon.byo{background:var(--glass-strong);border:1px solid var(--border);color:#C3D0FF}
+.tag{display:inline-block;margin-top:14px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:500;background:rgba(91,124,250,.16);color:var(--accent-light)}
+.tag.cyan{background:rgba(125,211,252,.15);color:var(--cyan)}
+.step-n{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:600;background:rgba(91,124,250,.18);color:var(--accent-light)}
+.point{display:flex;gap:14px;padding:18px 20px;align-items:flex-start}
+.point b{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px}
+.point b.ok{background:rgba(52,195,143,.16);color:var(--success-text)}
+.point b.warn{background:rgba(242,184,75,.16);color:var(--warning)}
+.point span{color:var(--soft)}
+
+/* phone mockups */
+.phones{display:flex;justify-content:center;gap:26px;flex-wrap:wrap}
+.phone-wrap{text-align:center}
+.phone-wrap figcaption{color:var(--muted);font-size:14px;margin-top:14px}
+.phone{position:relative;width:230px;height:470px;border-radius:34px;padding:14px;overflow:hidden;background:var(--base);border:1px solid rgba(255,255,255,.18);box-shadow:0 30px 60px rgba(0,0,0,.45),inset 0 0 0 6px #0d1328}
+.phone::before{content:"";position:absolute;left:-60px;top:-40px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(30,64,175,.6),transparent 65%)}
+.phone::after{content:"";position:absolute;right:-90px;bottom:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(67,56,202,.45),transparent 65%)}
+.scr{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:16px 8px 8px;font-size:11px}
+.scr .hd{display:flex;align-items:center;gap:6px;font-weight:600;font-size:11px;margin-bottom:14px}
+.scr h4{font-family:var(--display);font-weight:600;font-size:16px;line-height:1.2;margin:4px 0 6px}
+.scr .m{color:var(--muted);font-size:10px}
+.mini{background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:10px;margin-top:10px;text-align:left}
+.mini.on{border-color:var(--accent-bright);background:var(--glass-strong)}
+.mini b{display:block;font-size:11px;margin-bottom:3px}
+.mbtn{margin-top:auto;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px}
+.mbtn.p{background:linear-gradient(90deg,var(--accent-bright),var(--deep))}
+.mbtn.s{background:var(--glass-strong);border:1px solid var(--border)}
+.pill{align-self:center;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(52,195,143,.14);border:1px solid rgba(52,195,143,.35);color:var(--success-text)}
+.pill i{width:6px;height:6px;border-radius:50%;background:var(--success)}
+.ring{align-self:center;margin:14px 0 10px;width:140px;height:140px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:conic-gradient(var(--cyan),var(--accent-bright) 55%,var(--accent) 81%,rgba(255,255,255,.08) 81%);box-shadow:0 0 40px rgba(91,124,250,.45);position:relative}
+.ring::before{content:"";position:absolute;inset:10px;border-radius:50%;background:#0b1126}
+.ring span{position:relative;font-family:var(--display);font-weight:600;font-size:26px}
+.ring small{position:relative;color:var(--muted);font-size:10px}
+.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px}
+.row:last-child{border:0}
+.row span:first-child{color:var(--muted)}
+
+/* install + team */
+.install{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+@media (max-width:860px){.install{grid-template-columns:1fr}}
+ol.steps{list-style:none;counter-reset:s;margin:0;padding:0;display:grid;gap:12px}
+ol.steps li{counter-increment:s;display:flex;gap:14px;align-items:center;padding:16px 18px}
+ol.steps li::before{content:counter(s);flex:none;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:600;font-size:14px;background:rgba(91,124,250,.18);color:var(--accent-light)}
+.notice{padding:22px;border-color:rgba(242,184,75,.35);background:rgba(242,184,75,.07)}
+.notice h3{margin:0 0 8px;font-size:17px;color:var(--warning)}
+.notice p{margin:0;color:var(--soft)}
+.member{padding:22px}
+.member b{display:block;font-size:17px;margin-bottom:4px}
+.member span{color:var(--muted);font-size:14px}
+.avatar{width:44px;height:44px;border-radius:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:600;background:linear-gradient(135deg,var(--accent),var(--navy))}
+footer{position:relative;z-index:1;border-top:1px solid rgba(255,255,255,.08);padding:30px 0 40px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center}
+footer nav{display:flex;gap:18px}
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"><span></span><span></span><span></span></div>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="OmniTunnel">
+      <svg width="32" height="32" viewBox="0 0 120 120" fill="none" aria-hidden="true"><circle cx="60" cy="60" r="52" stroke="#3B5BDB" stroke-width="6"/><circle cx="65" cy="56" r="39" stroke="#5B7CFA" stroke-width="5.5" stroke-opacity=".85"/><circle cx="69" cy="53" r="26" stroke="#8EA6FF" stroke-width="5" stroke-opacity=".7"/><circle cx="72" cy="51" r="14" stroke="#C3D0FF" stroke-width="4.5" stroke-opacity=".6"/><circle cx="74" cy="50" r="7" fill="#E0F2FE"/></svg>
+      OmniTunnel
+    </a>
+    <ul>
+      <li><a href="#modes" data-i18n="navModes">Режимы</a></li>
+      <li><a href="#privacy" data-i18n="navPrivacy">Приватность</a></li>
+      <li><a href="#screens" data-i18n="navScreens">Экраны</a></li>
+      <li><a href="#install" data-i18n="navInstall">Установка</a></li>
+      <li><a href="#team" data-i18n="navTeam">Команда</a></li>
+    </ul>
+    <div class="lang" role="group" aria-label="Язык / Тил">
+      <button type="button" data-lang="ru" aria-pressed="true">RU</button>
+      <button type="button" data-lang="ky" aria-pressed="false">KY</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <span class="badge"><i></i><span data-i18n="badge">Пилот · Бишкек · по приглашениям</span></span>
+      <h1 data-i18n-html="heroTitle">Зашифрованный туннель <em>для Android</em></h1>
+      <p class="lead" data-i18n="heroLead">Получите доступ на 30 минут через наш сервер или подключите свой конфиг WireGuard — без аккаунта и без обращения к серверу OmniTunnel.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="omnitunnel.apk" download>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          <span data-i18n="download">Скачать для Android</span>
+        </a>
+        <a class="btn btn-ghost" href="#how" data-i18n="howBtn">Как это работает</a>
+      </div>
+      <p class="dl-note" data-i18n="dlNote">APK · Android 8.0+ · бесплатный пилот · демо-версия</p>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="orb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.4 7.2a7.5 7.5 0 1 0 11.2 0"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <section id="modes">
+    <div class="wrap">
+      <h2 data-i18n="modesTitle">Два режима, которые нельзя перепутать</h2>
+      <p class="sub" data-i18n="modesSub">Каждый режим работает отдельно: у управляемого — сервер и таймер, у своего конфига — только ваш файл.</p>
+      <div class="grid2">
+        <article class="glass card">
+          <div class="icon managed"><svg width="30" height="30" viewBox="0 0 120 120" fill="none" aria-hidden="true"><circle cx="60" cy="60" r="50" stroke="#DCE4FF" stroke-width="8"/><circle cx="66" cy="55" r="30" stroke="#DCE4FF" stroke-width="7" stroke-opacity=".7"/><circle cx="72" cy="51" r="11" fill="#fff"/></svg></div>
+          <h3 data-i18n="managedTitle">Доступ OmniTunnel</h3>
+          <p data-i18n="managedBody">Пробный доступ на 30 минут через наш сервер. Время считает сервер, а не телефон: когда оно закончится, VPN отключится сам.</p>
+          <span class="tag" data-i18n="managedTag">30 минут</span>
+        </article>
+        <article class="glass card">
+          <div class="icon byo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3"/><path d="m16 7 3 3"/><path d="m14 9 2 2"/></svg></div>
+          <h3 data-i18n="byoTitle">Свой конфиг</h3>
+          <p data-i18n="byoBody">Импортируйте свой файл WireGuard вставкой, файлом или QR-кодом. Работает офлайн, без таймера и без запросов к OmniTunnel.</p>
+          <span class="tag cyan" data-i18n="byoTag">Офлайн</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <h2 data-i18n="howTitle">Как это работает</h2>
+      <p class="sub" data-i18n="howSub">Три шага от установки до подключения.</p>
+      <div class="grid3">
+        <article class="glass card"><div class="step-n">1</div><h3 data-i18n="s1t">Выберите язык и режим</h3><p data-i18n="s1b">Русский или кыргызский. Режимы живут отдельно друг от друга.</p></article>
+        <article class="glass card"><div class="step-n">2</div><h3 data-i18n="s2t">Нажмите на шар</h3><p data-i18n="s2b">Приложение попросит у Android разрешение на VPN и получит доступ от сервера.</p></article>
+        <article class="glass card"><div class="step-n">3</div><h3 data-i18n="s3t">Подключено</h3><p data-i18n="s3b">Кольцо показывает, сколько осталось по часам сервера.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="wrap">
+      <h2 data-i18n="privTitle">Приватность без громких обещаний</h2>
+      <p class="sub" data-i18n="privSub">Мы пишем только то, что действительно так.</p>
+      <div class="grid2">
+        <div class="glass point"><b class="ok">✓</b><span data-i18n="p1">Мы не храним историю сайтов и DNS-запросов.</span></div>
+        <div class="glass point"><b class="ok">✓</b><span data-i18n="p2">Закрытый ключ остаётся на телефоне и не отправляется на сервер.</span></div>
+        <div class="glass point"><b class="ok">✓</b><span data-i18n="p3">Нет IMEI, серийного номера и номера телефона — только случайный ID установки.</span></div>
+        <div class="glass point"><b class="warn">!</b><span data-i18n="p4">Оператор сервера и хостинг всё равно видят технические данные подключения и незашифрованный трафик.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <h2 data-i18n="scrTitle">Экраны</h2>
+      <p class="sub" data-i18n="scrSub">Тёмная тема, стекло и свет. Все тексты — на русском и кыргызском.</p>
+      <div class="phones">
+        <figure class="phone-wrap" style="margin:0">
+          <div class="phone" aria-hidden="true"><div class="scr">
+            <div class="hd">◎ OmniTunnel</div>
+            <h4 data-i18n="mModeTitle">Выберите режим</h4>
+            <div class="m" data-i18n="mModeSub">Режимы работают отдельно</div>
+            <div class="mini on"><b data-i18n="managedTitle">Доступ OmniTunnel</b><span class="m" data-i18n="mManagedShort">30 минут через наш сервер</span></div>
+            <div class="mini"><b data-i18n="byoTitle">Свой конфиг</b><span class="m" data-i18n="mByoShort">Ваш WireGuard, офлайн</span></div>
+            <div class="mini" style="margin-top:auto"><span class="m" data-i18n="p1">Мы не храним историю сайтов и DNS-запросов.</span></div>
+          </div></div>
+          <figcaption data-i18n="cap1">Выбор режима</figcaption>
+        </figure>
+        <figure class="phone-wrap" style="margin:0">
+          <div class="phone" aria-hidden="true"><div class="scr">
+            <div class="hd">◎ <span data-i18n="managedTitle">Доступ OmniTunnel</span></div>
+            <span class="pill"><i></i><span data-i18n="mConnected">Подключено</span></span>
+            <div class="ring"><span>24:13</span><small data-i18n="mLeft">Осталось</small></div>
+            <div class="mini"><div class="row"><span data-i18n="mServer">Сервер</span><span data-i18n="mCity">Алматы</span></div><div class="row"><span data-i18n="mAddr">Адрес туннеля</span><span>10.8.0.12</span></div></div>
+            <div class="mbtn s" data-i18n="mDisconnect">Отключить</div>
+          </div></div>
+          <figcaption data-i18n="cap2">Подключено</figcaption>
+        </figure>
+        <figure class="phone-wrap" style="margin:0">
+          <div class="phone" aria-hidden="true"><div class="scr">
+            <div class="hd">◎ <span data-i18n="byoTitle">Свой конфиг</span></div>
+            <div class="mini on"><b data-i18n="mMyConfig">Мой конфиг</b>
+              <div class="row"><span data-i18n="mServer">Сервер</span><span>vpn.example.com</span></div>
+              <div class="row"><span data-i18n="mAddr">Адрес туннеля</span><span>10.0.0.2/32</span></div>
+              <div class="row"><span data-i18n="mKey">Закрытый ключ</span><span>••••••••</span></div>
+            </div>
+            <div class="m" style="margin-top:10px" data-i18n="mNoTimer">Без сервера OmniTunnel. Таймера нет.</div>
+            <div class="mbtn p" data-i18n="mConnect">Подключить</div>
+          </div></div>
+          <figcaption data-i18n="cap3">Свой конфиг</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <h2 data-i18n="instTitle">Как установить</h2>
+      <p class="sub" data-i18n="instSub">Приложения пока нет в Google Play, поэтому устанавливается из файла.</p>
+      <div class="install">
+        <ol class="steps">
+          <li class="glass" data-i18n="i1">Скачайте APK на телефон</li>
+          <li class="glass" data-i18n="i2">Откройте файл и разрешите установку из этого источника</li>
+          <li class="glass" data-i18n="i3">Если Play Protect предупредит — нажмите «Всё равно установить»</li>
+          <li class="glass" data-i18n="i4">Откройте OmniTunnel и выберите язык</li>
+        </ol>
+        <div>
+          <div class="glass notice">
+            <h3 data-i18n="noteTitle">Это демо-версия</h3>
+            <p data-i18n="noteBody">Пилот работает только по приглашениям. Сейчас все экраны работают на тестовых данных, а подключение к настоящему серверу появится позже.</p>
+          </div>
+          <div class="cta" style="margin-top:18px">
+            <a class="btn btn-primary" href="omnitunnel.apk" download><span data-i18n="download">Скачать для Android</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="team">
+    <div class="wrap">
+      <h2 data-i18n="teamTitle">Команда</h2>
+      <p class="sub" data-i18n="teamSub">Четыре части одного продукта.</p>
+      <div class="grid4">
+        <div class="glass member"><div class="avatar">K</div><b>Kanymjan</b><span data-i18n="rKanym">Flutter UI и дизайн</span></div>
+        <div class="glass member"><div class="avatar">E</div><b>Evgeniy</b><span data-i18n="rEvg">Backend · Django API</span></div>
+        <div class="glass member"><div class="avatar">S</div><b>Sohipjon</b><span data-i18n="rSoh">Mobile · Kotlin, VpnService</span></div>
+        <div class="glass member"><div class="avatar">O</div><b data-i18n="ownerName">Владелец проекта</b><span data-i18n="rOwner">VPN-узел, агент, watchdog</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span data-i18n="footer">Учебный проект · Кыргызско-Германский институт прикладной информатики · 2026</span>
+    <nav>
+      <a href="https://github.com/kanymjan/omnitunnel">GitHub</a>
+      <a href="https://www.figma.com/design/ohlJ8K5OfPqZU1u8eiH4IE">Figma</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+const T = {
+  ky: {
+    navModes:"Режимдер", navPrivacy:"Купуялык", navScreens:"Экрандар", navInstall:"Орнотуу", navTeam:"Команда",
+    badge:"Пилот · Бишкек · чакыруу менен",
+    heroTitle:"Android үчүн <em>шифрленген туннель</em>",
+    heroLead:"Биздин сервер аркылуу 30 мүнөткө кирүү алыңыз же өз WireGuard конфигиңизди туташтырыңыз — аккаунтсуз жана OmniTunnel серверине кайрылбастан.",
+    download:"Android үчүн жүктөп алуу", howBtn:"Бул кантип иштейт",
+    dlNote:"APK · Android 8.0+ · акысыз пилот · демо-версия",
+    modesTitle:"Чаташтырууга мүмкүн болбогон эки режим",
+    modesSub:"Ар бир режим өзүнчө иштейт: башкарылуучу режимде сервер жана таймер бар, өз конфигиңизде — сиздин файлыңыз гана.",
+    managedTitle:"OmniTunnel аркылуу кирүү",
+    managedBody:"Биздин сервер аркылуу 30 мүнөттүк сыноо кирүүсү. Убакытты телефон эмес, сервер эсептейт: ал бүткөндө VPN өзү ажыратылат.",
+    managedTag:"30 мүнөт", byoTitle:"Өз конфигиңиз",
+    byoBody:"WireGuard файлыңызды коюу, файл же QR-код аркылуу импорттоңуз. Офлайн, таймерсиз жана OmniTunnel'ге сурамсыз иштейт.",
+    byoTag:"Офлайн",
+    howTitle:"Бул кантип иштейт", howSub:"Орнотуудан туташууга чейин үч кадам.",
+    s1t:"Тилди жана режимди тандаңыз", s1b:"Орусча же кыргызча. Режимдер бири-биринен өзүнчө иштейт.",
+    s2t:"Шарды басыңыз", s2b:"Колдонмо Android'ден VPN уруксатын сурап, серверден кирүү алат.",
+    s3t:"Туташты", s3b:"Шакек сервердин сааты боюнча канча калганын көрсөтөт.",
+    privTitle:"Чоң убадаларсыз купуялык", privSub:"Биз чындыгында ошондой болгон нерсени гана жазабыз.",
+    p1:"Биз сайттардын жана DNS-сурамдардын тарыхын сактабайбыз.",
+    p2:"Жабык ачкыч телефондо калат жана серверге жөнөтүлбөйт.",
+    p3:"IMEI, сериялык номер жана телефон номери жок — кокустук орнотуу ID гана.",
+    p4:"Сервердин оператору жана хостинг баары бир туташуунун техникалык маалыматтарын жана шифрленбеген трафикти көрө алат.",
+    scrTitle:"Экрандар", scrSub:"Караңгы тема, айнек жана жарык. Бардык тексттер орус жана кыргыз тилдеринде.",
+    mModeTitle:"Режимди тандаңыз", mModeSub:"Режимдер өзүнчө иштейт",
+    mManagedShort:"Биздин сервер аркылуу 30 мүнөт", mByoShort:"Сиздин WireGuard, офлайн",
+    mConnected:"Туташты", mLeft:"Калды", mServer:"Сервер", mCity:"Алматы", mAddr:"Туннелдин дареги",
+    mDisconnect:"Ажыратуу", mMyConfig:"Менин конфигим", mKey:"Жабык ачкыч",
+    mNoTimer:"OmniTunnel серверисиз. Таймер жок.", mConnect:"Туташуу",
+    cap1:"Режим тандоо", cap2:"Туташты", cap3:"Өз конфигиңиз",
+    instTitle:"Кантип орнотуу керек", instSub:"Колдонмо азырынча Google Play'де жок, ошондуктан файлдан орнотулат.",
+    i1:"APK'ны телефонго жүктөп алыңыз", i2:"Файлды ачып, бул булактан орнотууга уруксат бериңиз",
+    i3:"Play Protect эскертсе — «Баары бир орнотуу» басыңыз", i4:"OmniTunnel'ди ачып, тилди тандаңыз",
+    noteTitle:"Бул демо-версия",
+    noteBody:"Пилот чакыруу менен гана иштейт. Азыр бардык экрандар сыноо маалыматтарында иштейт, ал эми чыныгы серверге туташуу кийинчерээк кошулат.",
+    teamTitle:"Команда", teamSub:"Бир продуктунун төрт бөлүгү.",
+    rKanym:"Flutter UI жана дизайн", rEvg:"Backend · Django API", rSoh:"Mobile · Kotlin, VpnService",
+    ownerName:"Долбоордун ээси", rOwner:"VPN-түйүн, агент, watchdog",
+    footer:"Окуу долбоору · Кыргыз-Герман прикладдык информатика институту · 2026",
+    title:"OmniTunnel — Android үчүн VPN-пилот"
+  }
+};
+const RU = {};
+document.querySelectorAll('[data-i18n]').forEach(el => { RU[el.dataset.i18n] = el.textContent; });
+document.querySelectorAll('[data-i18n-html]').forEach(el => { RU[el.dataset.i18nHtml] = el.innerHTML; });
+RU.title = document.title;
+T.ru = RU;
+
+function setLang(lang) {
+  const d = T[lang] || T.ru;
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { const v = d[el.dataset.i18n]; if (v) el.textContent = v; });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { const v = d[el.dataset.i18nHtml]; if (v) el.innerHTML = v; });
+  document.title = d.title;
+  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+  try { localStorage.setItem('ot-lang', lang); } catch (e) {}
+}
+document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+let start = new URLSearchParams(location.search).get('lang');
+if (!start) { try { start = localStorage.getItem('ot-lang'); } catch (e) {} }
+if (!start && (navigator.language || '').toLowerCase().startsWith('ky')) start = 'ky';
+setLang(start === 'ky' ? 'ky' : 'ru');
+</script>
+</body>
+</html>
