@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OmniTunnel — мониторинг</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none'%3E%3Ccircle cx='60' cy='60' r='52' stroke='%233B5BDB' stroke-width='8'/%3E%3Ccircle cx='66' cy='55' r='32' stroke='%238EA6FF' stroke-width='8'/%3E%3Ccircle cx='73' cy='50' r='11' fill='%23E0F2FE'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --base:#060A18; --text:#F2F5FF; --muted:#A8B3D1; --soft:#C9D3F2;
+  --accent:#3B5BDB; --accent-bright:#5B7CFA; --accent-light:#8EA6FF; --navy:#1E2A6B;
+  --success:#34C38F; --success-text:#6EE7B7; --warning:#F2B84B; --danger:#F06A6A; --danger-text:#FCA5A5;
+  --glass:rgba(255,255,255,.07); --glass-strong:rgba(255,255,255,.11); --border:rgba(255,255,255,.14); --line:rgba(255,255,255,.08);
+  --display:'Unbounded',system-ui,sans-serif; --body:'Onest',system-ui,sans-serif;
+}
+/* В Unbounded нет букв ү, ө, ң — для кыргызского заголовки набираем Onest */
+html[lang="ky"]{--display:'Onest',system-ui,sans-serif}
+html[lang="ky"] h1,html[lang="ky"] h2{font-weight:700;letter-spacing:-.3px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--base);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;overflow-x:hidden;min-height:100vh}
+a{color:var(--accent-light);text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer}
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.glow span{position:absolute;width:600px;height:600px;border-radius:50%;filter:blur(40px)}
+.glow span:nth-child(1){left:-200px;top:-200px;background:radial-gradient(circle,rgba(30,64,175,.5),transparent 65%)}
+.glow span:nth-child(2){right:-240px;bottom:-200px;background:radial-gradient(circle,rgba(67,56,202,.35),transparent 65%)}
+.wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:0 20px}
+.glass{background:var(--glass);border:1px solid var(--border);border-radius:20px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+
+header{position:sticky;top:0;z-index:10;background:rgba(6,10,24,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.06)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:600;font-size:17px;color:var(--text)}
+.brand small{font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted);padding-left:10px;border-left:1px solid var(--border)}
+.lang{display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--glass);border:1px solid var(--border)}
+.lang button{border:0;background:none;padding:5px 11px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted)}
+.lang button[aria-pressed="true"]{background:var(--accent-bright);color:#fff}
+
+main{padding:28px 0 56px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,3.4vw,32px);line-height:1.2;margin:0 0 6px}
+.sub{color:var(--muted);margin:0;font-size:14px}
+.source{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:500;background:rgba(242,184,75,.12);border:1px solid rgba(242,184,75,.3);color:#F7D28C}
+.source.real{background:rgba(91,124,250,.14);border-color:rgba(91,124,250,.35);color:var(--accent-light)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:12px;border:1px solid var(--border);background:var(--glass-strong);font-weight:600;font-size:14px}
+.btn:hover{border-color:var(--accent-light)}
+.btn svg{width:16px;height:16px}
+.btn.spin svg{animation:spin .8s linear}
+@keyframes spin{to{transform:rotate(360deg)}}
+select{font:inherit;font-size:14px;color:var(--text);background:var(--glass-strong);border:1px solid var(--border);border-radius:12px;padding:9px 12px}
+select option{background:#0d1328}
+
+.summary{display:flex;align-items:center;gap:16px;padding:18px 22px;margin-bottom:18px}
+.summary .big{width:46px;height:46px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center}
+.summary h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0 0 2px}
+.summary p{margin:0;color:var(--muted);font-size:13.5px}
+.ok-bg{background:rgba(52,195,143,.16);color:var(--success-text)}
+.warn-bg{background:rgba(242,184,75,.16);color:var(--warning)}
+.bad-bg{background:rgba(240,106,106,.16);color:var(--danger-text)}
+.big svg{width:24px;height:24px}
+
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.card{padding:18px;min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.card-h span{font-size:13.5px;color:var(--soft);font-weight:500}
+.path{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--muted);margin-bottom:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ok{background:rgba(52,195,143,.14);color:var(--success-text)}
+.pill.bad{background:rgba(240,106,106,.14);color:var(--danger-text)}
+.pill.warn{background:rgba(242,184,75,.14);color:var(--warning)}
+.pill.na{background:rgba(255,255,255,.08);color:var(--muted)}
+.value{font-family:var(--display);font-weight:600;font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.value small{font-family:var(--body);font-size:13px;font-weight:500;color:var(--muted);margin-left:4px}
+.meta{font-size:12.5px;color:var(--muted);margin-top:4px}
+.hist{display:flex;gap:2px;height:26px;align-items:stretch;margin-top:14px}
+.hist b{flex:1;border-radius:2px;background:rgba(255,255,255,.08)}
+.hist b.ok{background:var(--success)}
+.hist b.bad{background:var(--danger)}
+.hist b.warn{background:var(--warning)}
+.uptime{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px}
+
+.cols{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.panel{padding:20px}
+.panel h3{font-size:15px;font-weight:600;margin:0 0 14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-weight:500;font-size:12.5px;color:var(--muted);padding:0 8px 8px 0;border-bottom:1px solid var(--line)}
+td{padding:11px 8px 11px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;color:var(--soft)}
+.events{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto}
+.events li{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.events li:last-child{border-bottom:0}
+.events time{flex:none;color:var(--muted);font-variant-numeric:tabular-nums;font-size:12.5px;padding-top:1px}
+.events .dot{flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px}
+.empty{color:var(--muted);font-size:13.5px;padding:8px 0}
+.note{display:flex;gap:12px;margin-top:18px;padding:16px 18px;font-size:13px;color:var(--muted)}
+.note svg{flex:none;width:18px;height:18px;color:var(--accent-light);margin-top:1px}
+.note code{font-size:12px;color:var(--soft)}
+.scen{display:none}
+.demo .scen{display:inline-flex}
+
+@media (max-width:960px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cols{grid-template-columns:1fr}}
+@media (max-width:520px){
+  .wrap{padding:0 16px}
+  .brand small{display:none}
+  .grid{grid-template-columns:1fr 1fr;gap:10px}
+  .card{padding:14px;min-width:0}
+  .card-h{flex-wrap:wrap;align-items:flex-start}
+  .path{overflow-wrap:anywhere}
+  .hist{gap:1px}
+  .value{font-size:22px}
+  .controls{width:100%}
+  .controls .btn{flex:1;justify-content:center}
+  .controls select{flex:1;min-width:0}
+  .controls #scenario{flex-basis:100%}
+}
+@media (prefers-reduced-motion:reduce){.btn.spin svg{animation:none}}
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"><span></span><span></span></div>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="../">
+      <svg width="30" height="30" viewBox="0 0 120 120" fill="none" aria-hidden="true"><circle cx="60" cy="60" r="52" stroke="#3B5BDB" stroke-width="6"/><circle cx="65" cy="56" r="39" stroke="#5B7CFA" stroke-width="5.5" stroke-opacity=".85"/><circle cx="69" cy="53" r="26" stroke="#8EA6FF" stroke-width="5" stroke-opacity=".7"/><circle cx="72" cy="51" r="14" stroke="#C3D0FF" stroke-width="4.5" stroke-opacity=".6"/><circle cx="74" cy="50" r="7" fill="#E0F2FE"/></svg>
+      OmniTunnel <small data-i18n="brandSub">мониторинг</small>
+    </a>
+    <div class="lang" role="group" aria-label="Язык / Тил">
+      <button type="button" data-lang="ru" aria-pressed="true">RU</button>
+      <button type="button" data-lang="ky" aria-pressed="false">KY</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+  <div class="top">
+    <div>
+      <h1 data-i18n="title">Состояние сервиса</h1>
+      <p class="sub"><span data-i18n="lastCheck">Последняя проверка</span>: <span id="lastAt">—</span> · <span id="every"></span></p>
+      <div class="source" id="source"></div>
+    </div>
+    <div class="controls">
+      <select id="scenario" class="scen" aria-label="Сценарий">
+        <option value="ok" data-i18n="scOk">Сценарий: всё работает</option>
+        <option value="db_down" data-i18n="scDb">Сценарий: упала база</option>
+        <option value="node_down" data-i18n="scNode">Сценарий: узел не отвечает</option>
+        <option value="api_down" data-i18n="scApi">Сценарий: API лежит</option>
+      </select>
+      <select id="interval" aria-label="Интервал">
+        <option value="5">5 s</option>
+        <option value="10" selected>10 s</option>
+        <option value="30">30 s</option>
+        <option value="60">60 s</option>
+      </select>
+      <button class="btn" id="refresh" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        <span data-i18n="refresh">Проверить сейчас</span>
+      </button>
+    </div>
+  </div>
+
+  <section class="glass summary" id="summary" aria-live="polite">
+    <div class="big" id="sumIcon"></div>
+    <div><h2 id="sumTitle">—</h2><p id="sumText"></p></div>
+  </section>
+
+  <section class="grid">
+    <article class="glass card" id="c-live">
+      <div class="card-h"><span data-i18n="cLive">Процесс API</span><em class="pill na" data-pill><i></i>—</em></div>
+      <div class="path">GET /health/live</div>
+      <div class="value" data-value>—</div>
+      <div class="meta" data-meta></div>
+      <div class="hist" data-hist></div>
+      <div class="uptime"><span data-i18n="last40">последние проверки</span><span data-up>—</span></div>
+    </article>
+    <article class="glass card" id="c-ready">
+      <div class="card-h"><span data-i18n="cReady">База и Redis</span><em class="pill na" data-pill><i></i>—</em></div>
+      <div class="path">GET /health/ready</div>
+      <div class="value" data-value>—</div>
+      <div class="meta" data-meta></div>
+      <div class="hist" data-hist></div>
+      <div class="uptime"><span data-i18n="last40">последние проверки</span><span data-up>—</span></div>
+    </article>
+    <article class="glass card" id="c-nodes">
+      <div class="card-h"><span data-i18n="cNodes">Узлы</span><em class="pill na" data-pill><i></i>—</em></div>
+      <div class="path">GET /nodes</div>
+      <div class="value" data-value>—</div>
+      <div class="meta" data-meta></div>
+      <div class="hist" data-hist></div>
+      <div class="uptime"><span data-i18n="last40">последние проверки</span><span data-up>—</span></div>
+    </article>
+    <article class="glass card" id="c-trials">
+      <div class="card-h"><span data-i18n="cTrials">Активные выдачи</span><em class="pill na" data-pill><i></i>—</em></div>
+      <div class="path" data-i18n="trialsPath">состояние ACTIVE</div>
+      <div class="value" data-value>—</div>
+      <div class="meta" data-meta></div>
+      <div class="hist" data-hist></div>
+      <div class="uptime"><span data-i18n="last40">последние проверки</span><span data-up></span></div>
+    </article>
+  </section>
+
+  <section class="cols">
+    <div class="glass panel">
+      <h3 data-i18n="nodesTitle">Узлы выхода</h3>
+      <table>
+        <thead><tr><th data-i18n="thNode">Узел</th><th data-i18n="thState">Состояние</th><th data-i18n="thSeen">Отвечал</th></tr></thead>
+        <tbody id="nodesBody"><tr><td colspan="3" class="empty">—</td></tr></tbody>
+      </table>
+    </div>
+    <div class="glass panel">
+      <h3 data-i18n="eventsTitle">События</h3>
+      <ul class="events" id="events"></ul>
+    </div>
+  </section>
+
+  <aside class="glass note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/></svg>
+    <div data-i18n-html="privacy">Страница проверяет только <code>/health/live</code>, <code>/health/ready</code> и список узлов. Она не показывает IP-адреса, DNS-запросы, ключи и данные пользователей и не выводит тела ответов сервера — только код и время ответа.</div>
+  </aside>
+</main>
+
+<script>
+(function(){
+'use strict';
+var T = {
+  ru:{
+    brandSub:'мониторинг', title:'Состояние сервиса', lastCheck:'Последняя проверка', refresh:'Проверить сейчас',
+    every:'проверка каждые {n} с', cLive:'Процесс API', cReady:'База и Redis', cNodes:'Узлы', cTrials:'Активные выдачи',
+    trialsPath:'состояние ACTIVE', last40:'последние проверки', nodesTitle:'Узлы выхода', thNode:'Узел', thState:'Состояние',
+    thSeen:'Отвечал', eventsTitle:'События', scOk:'Сценарий: всё работает', scDb:'Сценарий: упала база',
+    scNode:'Сценарий: узел не отвечает', scApi:'Сценарий: API лежит',
+    srcDemo:'Тестовые данные — настоящего API пока нет', srcReal:'Настоящий API: {host}',
+    up:'работает', down:'сбой', noResp:'нет ответа', na:'нет данных', ms:'мс', nodesOf:'из {t} живы',
+    sumOk:'Всё работает', sumOkT:'API, база и все узлы отвечают.',
+    sumWarn:'Есть сбои', sumWarnT:'Часть сервиса не отвечает — смотрите карточки и события.',
+    sumBad:'API недоступен', sumBadT:'Сервер не отвечает. Приложение не сможет выдать доступ.',
+    sumWait:'Проверяем…', sumWaitT:'',
+    trialsNoPath:'В разделе 1.7 нет пути для этого числа — согласовать с Evgeniy',
+    trialsDemo:'демо-число', nodeAlive:'отвечает', nodeDead:'не отвечает', never:'—', ago:'{n} с назад',
+    noEvents:'Пока событий нет.', evStart:'Мониторинг запущен', evDown:'{name}: сбой', evUp:'{name}: снова работает',
+    evNodeDown:'Узел {name} не отвечает', evNodeUp:'Узел {name} снова отвечает',
+    privacy:'Страница проверяет только <code>/health/live</code>, <code>/health/ready</code> и список узлов. Она не показывает IP-адреса, DNS-запросы, ключи и данные пользователей и не выводит тела ответов сервера — только код и время ответа.'
+  },
+  ky:{
+    brandSub:'мониторинг', title:'Кызматтын абалы', lastCheck:'Акыркы текшерүү', refresh:'Азыр текшерүү',
+    every:'ар {n} секундда текшерилет', cLive:'API процесси', cReady:'База жана Redis', cNodes:'Түйүндөр', cTrials:'Активдүү берүүлөр',
+    trialsPath:'ACTIVE абалы', last40:'акыркы текшерүүлөр', nodesTitle:'Чыгуу түйүндөрү', thNode:'Түйүн', thState:'Абалы',
+    thSeen:'Жооп берген', eventsTitle:'Окуялар', scOk:'Сценарий: баары иштейт', scDb:'Сценарий: база иштебей калды',
+    scNode:'Сценарий: түйүн жооп бербейт', scApi:'Сценарий: API иштебейт',
+    srcDemo:'Тесттик маалыматтар — чыныгы API азырынча жок', srcReal:'Чыныгы API: {host}',
+    up:'иштеп жатат', down:'үзгүлтүк', noResp:'жооп жок', na:'маалымат жок', ms:'мс', nodesOf:'/ {t} тирүү',
+    sumOk:'Баары иштеп жатат', sumOkT:'API, база жана бардык түйүндөр жооп берип жатат.',
+    sumWarn:'Үзгүлтүктөр бар', sumWarnT:'Кызматтын бир бөлүгү жооп бербей жатат — карточкаларды жана окуяларды караңыз.',
+    sumBad:'API жеткиликсиз', sumBadT:'Сервер жооп бербей жатат. Колдонмо кирүү бере албайт.',
+    sumWait:'Текшерип жатабыз…', sumWaitT:'',
+    trialsNoPath:'1.7-бөлүмдө бул сан үчүн жол жок — Evgeniy менен макулдашуу керек',
+    trialsDemo:'демо сан', nodeAlive:'жооп берет', nodeDead:'жооп бербейт', never:'—', ago:'{n} сек мурун',
+    noEvents:'Азырынча окуялар жок.', evStart:'Мониторинг иштетилди', evDown:'{name}: үзгүлтүк', evUp:'{name}: кайра иштеп жатат',
+    evNodeDown:'{name} түйүнү жооп бербейт', evNodeUp:'{name} түйүнү кайра жооп берет',
+    privacy:'Бул барак <code>/health/live</code>, <code>/health/ready</code> жана түйүндөрдүн тизмесин гана текшерет. IP даректерди, DNS сурамдарын, ачкычтарды жана колдонуучулардын маалыматтарын көрсөтпөйт, сервердин жоопторунун мазмунун чыгарбайт — коду жана убактысы гана.'
+  }
+};
+
+var params = new URLSearchParams(location.search);
+var API = (params.get('api') || '').replace(/\/+$/, '');
+var DEMO = !API;
+var HIST = 40;
+var lang = 'ru';
+try { lang = params.get('lang') || localStorage.getItem('ot.lang') || 'ru'; } catch (e) {}
+if (!T[lang]) lang = 'ru';
+
+function t(k, vars){ var s = (T[lang][k] != null ? T[lang][k] : T.ru[k]) || k; if (vars) for (var v in vars) s = s.replace('{'+v+'}', vars[v]); return s; }
+function $(s, r){ return (r || document).querySelector(s); }
+
+/* ---------- состояние ---------- */
+var checks = { live:[], ready:[], nodes:[], trials:[] };
+var last = { live:null, ready:null, nodes:null, trials:null };
+var nodes = {};          // id -> {label, alive, seenAt}
+var events = [];         // {at, kind, key, vars}
+var lastAt = null;
+var timer = null;
+
+/* ---------- источник: заглушки ---------- */
+var demo = {
+  scenario: 'ok',
+  trials: 4,
+  nodeList: [
+    { id:'kg-bish-1', label:'Bishkek 1' },
+    { id:'kz-alm-1', label:'Almaty 1 (кандидат)' }
+  ],
+  lat: function(base){ return Math.round(base + Math.random() * base * 0.8); },
+  live: function(){ var s = this.scenario; return s === 'api_down' ? { ok:false, code:0, ms:null } : { ok:true, code:200, ms:this.lat(35) }; },
+  ready: function(){ var s = this.scenario;
+    if (s === 'api_down') return { ok:false, code:0, ms:null };
+    if (s === 'db_down') return { ok:false, code:503, ms:this.lat(60) };   // live жив, ready падает — как требует раздел 1.9
+    return { ok:true, code:200, ms:this.lat(55) }; },
+  nodes: function(){ var s = this.scenario;
+    if (s === 'api_down' || s === 'db_down') return { ok:false, code: s === 'api_down' ? 0 : 503, ms:null, list:null };
+    return { ok:true, code:200, ms:this.lat(70), list: this.nodeList.map(function(n, i){ return { id:n.id, label:n.label, alive: !(s === 'node_down' && i === 0) }; }) }; },
+  trialsCount: function(){ if (this.scenario !== 'ok' && this.scenario !== 'node_down') return null;
+    this.trials = Math.max(0, Math.min(15, this.trials + Math.round(Math.random() * 4 - 2))); return this.trials; }
+};
+
+/* ---------- источник: настоящий API ---------- */
+function probe(path){
+  var ctl = ('AbortController' in window) ? new AbortController() : null;
+  var started = performance.now();
+  var to = setTimeout(function(){ if (ctl) ctl.abort(); }, 5000);
+  return fetch(API + path, { cache:'no-store', signal: ctl ? ctl.signal : undefined, headers:{ 'Accept':'application/json' } })
+    .then(function(r){ clearTimeout(to); var ms = Math.round(performance.now() - started);
+      return { ok:r.ok, code:r.status, ms:ms, res:r }; })
+    .catch(function(){ clearTimeout(to); return { ok:false, code:0, ms:null, res:null }; });
+}
+function realNodes(){
+  return probe('/nodes').then(function(p){
+    if (!p.ok || !p.res) return { ok:false, code:p.code, ms:p.ms, list:null };
+    return p.res.json().then(function(j){
+      var arr = Array.isArray(j) ? j : (j && Array.isArray(j.results) ? j.results : []);
+      // Берём только id, подпись и alive. Адреса и прочие поля не читаем и не показываем.
+      var list = arr.map(function(n){ return { id:String(n.id), label:String(n.label || n.id), alive: n.alive === true }; });
+      return { ok:true, code:p.code, ms:p.ms, list:list };
+    }).catch(function(){ return { ok:false, code:p.code, ms:p.ms, list:null }; });
+  });
+}
+
+/* ---------- одна проверка ---------- */
+function runCheck(){
+  var btn = $('#refresh'); btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin');
+  var job = DEMO
+    ? Promise.resolve([demo.live(), demo.ready(), demo.nodes(), demo.trialsCount()])
+    : Promise.all([probe('/health/live'), probe('/health/ready'), realNodes(), Promise.resolve(null)]);
+  return job.then(function(r){
+    var now = new Date();
+    record('live', r[0].ok ? 'ok' : 'bad', r[0], 'cLive');
+    record('ready', r[1].ok ? 'ok' : 'bad', r[1], 'cReady');
+    var nr = r[2], nState = 'bad';
+    if (nr.ok && nr.list) {
+      var aliveN = nr.list.filter(function(n){ return n.alive; }).length;
+      nState = nr.list.length && aliveN === nr.list.length ? 'ok' : (aliveN > 0 ? 'warn' : 'bad');
+      nr.list.forEach(function(n){
+        var prev = nodes[n.id];
+        if (prev && prev.alive != null && prev.alive !== n.alive) pushEvent(n.alive ? 'ok' : 'bad', n.alive ? 'evNodeUp' : 'evNodeDown', { name:n.label });
+        nodes[n.id] = { label:n.label, alive:n.alive, seenAt: n.alive ? now : (prev ? prev.seenAt : null) };
+      });
+      nr.alive = aliveN; nr.total = nr.list.length;
+    }
+    else Object.keys(nodes).forEach(function(id){ nodes[id].alive = null; });   // ответа нет — состояние узлов неизвестно
+    record('nodes', nState, nr, 'cNodes');
+    var tc = r[3];
+    push('trials', tc == null ? 'none' : 'ok'); last.trials = tc;
+    lastAt = now;
+    render();
+  });
+}
+function push(key, state){ checks[key].push(state); if (checks[key].length > HIST) checks[key].shift(); }
+function record(key, state, res, nameKey){
+  var prev = last[key];
+  if (prev && prev.state !== state) {
+    var good = state === 'ok';
+    pushEvent(good ? 'ok' : (state === 'warn' ? 'warn' : 'bad'), good ? 'evUp' : 'evDown', { name:'@' + nameKey });
+  }
+  push(key, state);
+  last[key] = { state:state, code:res.code, ms:res.ms, alive:res.alive, total:res.total };
+}
+function pushEvent(kind, key, vars){ events.unshift({ at:new Date(), kind:kind, key:key, vars:vars || {} }); if (events.length > 50) events.pop(); }
+
+/* ---------- отрисовка ---------- */
+function fmtTime(d){ return d ? d.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }) : '—'; }
+function pill(el, cls, text){ el.className = 'pill ' + cls; el.innerHTML = '<i></i>'; el.appendChild(document.createTextNode(text)); }
+function renderHist(card, arr){
+  var h = $('[data-hist]', card), html = '';
+  for (var i = 0; i < HIST - arr.length; i++) html += '<b></b>';
+  arr.forEach(function(s){ html += '<b class="' + (s === 'none' ? '' : s) + '"></b>'; });
+  h.innerHTML = html;
+  var up = $('[data-up]', card); if (!up) return;
+  var counted = arr.filter(function(s){ return s !== 'none'; });
+  up.textContent = counted.length ? Math.round(counted.filter(function(s){ return s === 'ok'; }).length / counted.length * 100) + '%' : '';
+}
+function renderHealth(id, key){
+  var card = $('#' + id), l = last[key];
+  if (!l) return;
+  pill($('[data-pill]', card), l.state === 'ok' ? 'ok' : 'bad', l.state === 'ok' ? t('up') : (l.code ? t('down') : t('noResp')));
+  $('[data-value]', card).innerHTML = l.ms != null ? l.ms + '<small>' + t('ms') + '</small>' : '—';
+  $('[data-meta]', card).textContent = l.code ? 'HTTP ' + l.code : t('noResp');
+  renderHist(card, checks[key]);
+}
+function render(){
+  document.documentElement.lang = lang;
+  document.title = 'OmniTunnel — ' + t('brandSub');
+  [].forEach.call(document.querySelectorAll('[data-i18n]'), function(el){ el.textContent = t(el.getAttribute('data-i18n')); });
+  [].forEach.call(document.querySelectorAll('[data-i18n-html]'), function(el){ el.innerHTML = t(el.getAttribute('data-i18n-html')); });
+  [].forEach.call(document.querySelectorAll('.lang button'), function(b){ b.setAttribute('aria-pressed', String(b.dataset.lang === lang)); });
+
+  var src = $('#source');
+  src.className = 'source' + (DEMO ? '' : ' real');
+  var host = ''; try { host = new URL(API).host; } catch (e) { host = API; }
+  src.textContent = DEMO ? t('srcDemo') : t('srcReal', { host:host });
+  $('#app').classList.toggle('demo', DEMO);
+  $('#every').textContent = t('every', { n: $('#interval').value });
+  $('#lastAt').textContent = fmtTime(lastAt);
+
+  renderHealth('c-live', 'live');
+  renderHealth('c-ready', 'ready');
+
+  var nc = $('#c-nodes'), ln = last.nodes;
+  if (ln) {
+    pill($('[data-pill]', nc), ln.state, ln.state === 'ok' ? t('up') : (ln.state === 'warn' ? t('down') : (ln.code ? t('down') : t('noResp'))));
+    $('[data-value]', nc).innerHTML = ln.total != null ? ln.alive + '<small>' + t('nodesOf', { t: ln.total }) + '</small>' : '—';
+    $('[data-meta]', nc).textContent = ln.code ? 'HTTP ' + ln.code + (ln.ms != null ? ' · ' + ln.ms + ' ' + t('ms') : '') : t('noResp');
+    renderHist(nc, checks.nodes);
+  }
+
+  var tcard = $('#c-trials');
+  if (DEMO && last.trials != null) {
+    pill($('[data-pill]', tcard), 'warn', t('trialsDemo'));
+    $('[data-value]', tcard).textContent = last.trials;
+    $('[data-meta]', tcard).textContent = '';
+  } else {
+    pill($('[data-pill]', tcard), 'na', t('na'));
+    $('[data-value]', tcard).textContent = '—';
+    $('[data-meta]', tcard).textContent = DEMO ? t('noResp') : t('trialsNoPath');
+  }
+  renderHist(tcard, checks.trials);
+
+  // узлы
+  var ids = Object.keys(nodes), body = $('#nodesBody');
+  if (!ids.length) body.innerHTML = '<tr><td colspan="3" class="empty">' + t('na') + '</td></tr>';
+  else {
+    body.innerHTML = '';
+    ids.forEach(function(id){
+      var n = nodes[id], tr = document.createElement('tr');
+      var td1 = document.createElement('td'); td1.textContent = n.label;
+      var td2 = document.createElement('td'); var p = document.createElement('em'); if (n.alive == null) pill(p, 'na', t('na')); else pill(p, n.alive ? 'ok' : 'bad', n.alive ? t('nodeAlive') : t('nodeDead')); td2.appendChild(p);
+      var td3 = document.createElement('td'); td3.className = 'num';
+      td3.textContent = n.seenAt ? t('ago', { n: Math.max(0, Math.round((Date.now() - n.seenAt) / 1000)) }) : t('never');
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); body.appendChild(tr);
+    });
+  }
+
+  // события
+  var ul = $('#events');
+  if (!events.length) ul.innerHTML = '<li class="empty">' + t('noEvents') + '</li>';
+  else {
+    ul.innerHTML = '';
+    events.forEach(function(e){
+      var vars = {}; for (var k in e.vars) vars[k] = String(e.vars[k]).charAt(0) === '@' ? t(e.vars[k].slice(1)) : e.vars[k];
+      var li = document.createElement('li');
+      var tm = document.createElement('time'); tm.textContent = fmtTime(e.at);
+      var dot = document.createElement('span'); dot.className = 'dot';
+      dot.style.background = e.kind === 'ok' ? 'var(--success)' : e.kind === 'warn' ? 'var(--warning)' : e.kind === 'info' ? 'var(--accent-light)' : 'var(--danger)';
+      var tx = document.createElement('span'); tx.textContent = t(e.key, vars);
+      li.appendChild(tm); li.appendChild(dot); li.appendChild(tx); ul.appendChild(li);
+    });
+  }
+
+  // сводка
+  var icon = $('#sumIcon'), st, title, text;
+  if (!last.live) { st = 'warn'; title = t('sumWait'); text = ''; }
+  else if (last.live.state !== 'ok') { st = 'bad'; title = t('sumBad'); text = t('sumBadT'); }
+  else if (last.ready.state !== 'ok' || last.nodes.state !== 'ok') { st = 'warn'; title = t('sumWarn'); text = t('sumWarnT'); }
+  else { st = 'ok'; title = t('sumOk'); text = t('sumOkT'); }
+  icon.className = 'big ' + st + '-bg';
+  icon.innerHTML = st === 'ok'
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><path d="M12 17h.01"/><path d="M10.3 3.9 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
+  $('#sumTitle').textContent = title; $('#sumText').textContent = text;
+}
+
+/* ---------- управление ---------- */
+function schedule(){ clearInterval(timer); timer = setInterval(runCheck, Number($('#interval').value) * 1000); render(); }
+$('#refresh').addEventListener('click', runCheck);
+$('#interval').addEventListener('change', schedule);
+$('#scenario').addEventListener('change', function(e){ demo.scenario = e.target.value; runCheck(); });
+[].forEach.call(document.querySelectorAll('.lang button'), function(b){
+  b.addEventListener('click', function(){ lang = b.dataset.lang; try { localStorage.setItem('ot.lang', lang); } catch (e) {} render(); });
+});
+var sc = params.get('scenario'); if (DEMO && sc && $('#scenario option[value="' + sc + '"]')) { demo.scenario = sc; $('#scenario').value = sc; }
+
+pushEvent('info', 'evStart');
+render();
+runCheck();
+schedule();
+setInterval(function(){ if (Object.keys(nodes).length) render(); }, 5000);
+})();
+</script>
+</body>
+</html>
