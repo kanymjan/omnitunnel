@@ -35,6 +35,10 @@ header{position:sticky;top:0;z-index:10;background:rgba(6,10,24,.7);backdrop-fil
 .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;height:64px}
 .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:600;font-size:17px;color:var(--text)}
 .brand small{font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted);padding-left:10px;border-left:1px solid var(--border)}
+.right{display:flex;align-items:center;gap:10px}
+.back{display:inline-flex;align-items:center;gap:4px;padding:6px 12px 6px 8px;border-radius:12px;border:1px solid var(--border);background:var(--glass);color:var(--soft);font-size:13.5px;font-weight:600}
+.back:hover{color:var(--text);border-color:var(--accent-light)}
+.back svg{width:16px;height:16px}
 .lang{display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--glass);border:1px solid var(--border)}
 .lang button{border:0;background:none;padding:5px 11px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted)}
 .lang button[aria-pressed="true"]{background:var(--accent-bright);color:#fff}
@@ -131,9 +135,12 @@ td.num{font-variant-numeric:tabular-nums;color:var(--soft)}
       <svg width="30" height="30" viewBox="0 0 120 120" fill="none" aria-hidden="true"><circle cx="60" cy="60" r="52" stroke="#3B5BDB" stroke-width="6"/><circle cx="65" cy="56" r="39" stroke="#5B7CFA" stroke-width="5.5" stroke-opacity=".85"/><circle cx="69" cy="53" r="26" stroke="#8EA6FF" stroke-width="5" stroke-opacity=".7"/><circle cx="72" cy="51" r="14" stroke="#C3D0FF" stroke-width="4.5" stroke-opacity=".6"/><circle cx="74" cy="50" r="7" fill="#E0F2FE"/></svg>
       OmniTunnel <small data-i18n="brandSub">мониторинг</small>
     </a>
+    <div class="right">
+    <a class="back" href="../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="back">На сайт</span></a>
     <div class="lang" role="group" aria-label="Язык / Тил">
       <button type="button" data-lang="ru" aria-pressed="true">RU</button>
       <button type="button" data-lang="ky" aria-pressed="false">KY</button>
+    </div>
     </div>
   </div>
 </header>
@@ -230,7 +237,7 @@ td.num{font-variant-numeric:tabular-nums;color:var(--soft)}
 'use strict';
 var T = {
   ru:{
-    brandSub:'мониторинг', title:'Состояние сервиса', lastCheck:'Последняя проверка', refresh:'Проверить сейчас',
+    back:'На сайт', brandSub:'мониторинг', title:'Состояние сервиса', lastCheck:'Последняя проверка', refresh:'Проверить сейчас',
     every:'проверка каждые {n} с', cLive:'Процесс API', cReady:'База и Redis', cNodes:'Узлы', cTrials:'Активные выдачи',
     trialsPath:'состояние ACTIVE', last40:'последние проверки', nodesTitle:'Узлы выхода', thNode:'Узел', thState:'Состояние',
     thSeen:'Отвечал', eventsTitle:'События', scOk:'Сценарий: всё работает', scDb:'Сценарий: упала база',
@@ -248,7 +255,7 @@ var T = {
     privacy:'Страница проверяет только <code>/health/live</code>, <code>/health/ready</code> и список узлов. Она не показывает IP-адреса, DNS-запросы, ключи и данные пользователей и не выводит тела ответов сервера — только код и время ответа.'
   },
   ky:{
-    brandSub:'мониторинг', title:'Кызматтын абалы', lastCheck:'Акыркы текшерүү', refresh:'Азыр текшерүү',
+    back:'Сайтка', brandSub:'мониторинг', title:'Кызматтын абалы', lastCheck:'Акыркы текшерүү', refresh:'Азыр текшерүү',
     every:'ар {n} секундда текшерилет', cLive:'API процесси', cReady:'База жана Redis', cNodes:'Түйүндөр', cTrials:'Активдүү берүүлөр',
     trialsPath:'ACTIVE абалы', last40:'акыркы текшерүүлөр', nodesTitle:'Чыгуу түйүндөрү', thNode:'Түйүн', thState:'Абалы',
     thSeen:'Жооп берген', eventsTitle:'Окуялар', scOk:'Сценарий: баары иштейт', scDb:'Сценарий: база иштебей калды',
