@@ -272,7 +272,7 @@ var API = (params.get('api') || '').replace(/\/+$/, '');
 var DEMO = !API;
 var HIST = 40;
 var lang = 'ru';
-try { lang = params.get('lang') || localStorage.getItem('ot.lang') || 'ru'; } catch (e) {}
+try { lang = params.get('lang') || localStorage.getItem('ot-lang') || 'ru'; } catch (e) {}
 if (!T[lang]) lang = 'ru';
 
 function t(k, vars){ var s = (T[lang][k] != null ? T[lang][k] : T.ru[k]) || k; if (vars) for (var v in vars) s = s.replace('{'+v+'}', vars[v]); return s; }
@@ -478,7 +478,7 @@ $('#refresh').addEventListener('click', runCheck);
 $('#interval').addEventListener('change', schedule);
 $('#scenario').addEventListener('change', function(e){ demo.scenario = e.target.value; runCheck(); });
 [].forEach.call(document.querySelectorAll('.lang button'), function(b){
-  b.addEventListener('click', function(){ lang = b.dataset.lang; try { localStorage.setItem('ot.lang', lang); } catch (e) {} render(); });
+  b.addEventListener('click', function(){ lang = b.dataset.lang; try { localStorage.setItem('ot-lang', lang); } catch (e) {} render(); });
 });
 var sc = params.get('scenario'); if (DEMO && sc && $('#scenario option[value="' + sc + '"]')) { demo.scenario = sc; $('#scenario').value = sc; }
 

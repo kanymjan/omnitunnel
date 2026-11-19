@@ -43,6 +43,9 @@ header{position:sticky;top:0;z-index:10;background:rgba(6,10,24,.65);backdrop-fi
 .nav ul{display:flex;gap:22px;list-style:none;margin:0 0 0 auto;padding:0}
 .nav ul a{color:var(--muted);font-size:15px}
 .nav ul a:hover{color:var(--text)}
+.nav-status{display:inline-flex;align-items:center;gap:7px}
+.nav-status i{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px rgba(52,195,143,.18)}
+footer nav{flex-wrap:wrap}
 .lang{display:flex;padding:3px;border-radius:999px;background:var(--glass);border:1px solid var(--border)}
 .lang button{border:0;background:none;color:var(--muted);font:500 13px var(--body);padding:6px 12px;border-radius:999px;cursor:pointer}
 .lang button[aria-pressed="true"]{background:var(--accent-bright);color:#fff}
@@ -154,6 +157,7 @@ footer nav{display:flex;gap:18px}
       <li><a href="#screens" data-i18n="navScreens">Экраны</a></li>
       <li><a href="#install" data-i18n="navInstall">Установка</a></li>
       <li><a href="#team" data-i18n="navTeam">Команда</a></li>
+      <li><a class="nav-status" href="monitor/"><i aria-hidden="true"></i><span data-i18n="navStatus">Статус</span></a></li>
     </ul>
     <div class="lang" role="group" aria-label="Язык / Тил">
       <button type="button" data-lang="ru" aria-pressed="true">RU</button>
@@ -315,6 +319,7 @@ footer nav{display:flex;gap:18px}
   <div class="wrap">
     <span data-i18n="footer">Учебный проект · Кыргызско-Германский институт прикладной информатики · 2026</span>
     <nav>
+      <a href="monitor/" data-i18n="footStatus">Статус сервиса</a>
       <a href="https://github.com/kanymjan/omnitunnel">GitHub</a>
       <a href="https://www.figma.com/design/ohlJ8K5OfPqZU1u8eiH4IE">Figma</a>
     </nav>
@@ -324,7 +329,7 @@ footer nav{display:flex;gap:18px}
 <script>
 const T = {
   ky: {
-    navModes:"Режимдер", navPrivacy:"Купуялык", navScreens:"Экрандар", navInstall:"Орнотуу", navTeam:"Команда",
+    navModes:"Режимдер", navPrivacy:"Купуялык", navScreens:"Экрандар", navInstall:"Орнотуу", navTeam:"Команда", navStatus:"Абалы", footStatus:"Кызматтын абалы",
     badge:"Пилот · Бишкек · чакыруу менен",
     heroTitle:"Android үчүн <em>шифрленген туннель</em>",
     heroLead:"Биздин сервер аркылуу 30 мүнөткө кирүү алыңыз же өз WireGuard конфигиңизди туташтырыңыз — аккаунтсуз жана OmniTunnel серверине кайрылбастан.",
